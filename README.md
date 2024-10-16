@@ -19,4 +19,5 @@ O sistema DATARUNNER inicia-se baseado na necessidade de armazenar e disponibilz
  - [ ] Criar tela para registro de testes realizados e atrelar a um usuário cadastrado
  - [ ] Criar tela para visualização dos registros e manipulação (editar e excluir) - admin
  - [ ] Criar tela para visualização de registros - user
+ - [ ] Criar tela para registro de alunos - admin
 
