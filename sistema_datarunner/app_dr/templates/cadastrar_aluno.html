@@ -1,0 +1,18 @@
+{% extends "base_adm.html" %}
+
+{% block title %} DATARUNNER - Cadastrar Aluno {% endblock %}
+
+{% block content %}
+
+  <h1>Cadastrar Aluno</h1>
+
+  <form method="POST">
+    {% csrf_token %}
+    {{ formulario.as_p }}
+    <button type="submit">Salvar</button>
+  </form>
+
+</body>
+</html>
+
+{% endblock %}

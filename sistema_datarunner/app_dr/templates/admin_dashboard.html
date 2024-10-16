@@ -1,0 +1,54 @@
+{% extends "base_adm.html" %}
+
+{% block title %} DATARUNNER - Painel de Administração {% endblock %}
+
+{% block content %}
+
+<a href="{% url 'cadastrar_teste' %}">Cadastrar Novo Teste</a>
+<a href="{% url 'cadastrar_aluno' %}">Cadastrar Novo Aluno</a>
+
+<h2>Testes Cadastrados</h2>
+
+{% if testes %}
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nome do Aluno</th>
+                <th>Data do Teste</th>
+                <th>Tipo de Teste</th>
+                <th>Tempo/Distância</th>
+                <th>BPM</th>
+                <th>Pace</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for teste in testes %}
+                <tr>
+                    <td>{{ teste.id }}</td>
+                    <td>{{ teste.usuario.nome_completo }}</td>
+                    <td>{{ teste.data_teste }}</td>
+                    <td>{{ teste.tipo_teste }}</td>
+                    <td>
+                        {% if teste.tipo_teste == "3km" %}
+                            {{ teste.tempo }}
+                        {% else %}
+                            {{ teste.distancia }}
+                        {% endif %}
+                    </td>
+                    <td>{{ teste.bpm }}</td>
+                    <td>{{ teste.pace }}</td>
+                    <td>
+                        <a href="{% url 'editar_teste' teste.id %}">Editar</a> |
+                        <a href="{% url 'excluir_teste' teste.id %}">Excluir</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>Nenhum teste cadastrado ainda.</p>
+{% endif %}
+
+{% endblock %}
