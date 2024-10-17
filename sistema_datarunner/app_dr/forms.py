@@ -12,7 +12,7 @@ class FormRegistroUsuario(UserCreationForm):
 
     class Meta:
         model = User
-        fields = ['username', 'nome_completo', 'email', 'password1', 'password2']
+        fields = ['nome_completo', 'email', 'password1', 'password2']
 
     def verifica_email(self):
         email = self.cleaned_data.get('email')
@@ -30,7 +30,7 @@ class AlunoForm(forms.ModelForm):
         model = Aluno
         fields = ['data_nascimento', 'peso', 'altura']
 
-    def clean_email(self):
+    def verifica_email(self):
         email = self.cleaned_data.get('email')
         if User.objects.filter(email=email).exists():
             raise forms.ValidationError('Já existe um usuário com este e-mail')
@@ -56,9 +56,9 @@ class TesteForm(forms.ModelForm):
 
 #Form para login
 class CustomLoginUsuario(AuthenticationForm):
-    username = forms.CharField(
+    username = forms.EmailField(
         label="E-mail",
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'E-Mail'})
+        widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'E-Mail', 'autofocus': True})
     )
     password = forms.CharField(
         label="Senha",

@@ -1,13 +1,12 @@
 from re import search
 
 from django.contrib.auth import login, authenticate, logout
-from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import User
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 
-from .models import UserProfile, Teste, Aluno
+from .models import Teste, Aluno
 from .forms import FormRegistroUsuario, TesteForm, AlunoForm, CustomLoginUsuario
 
 
@@ -15,17 +14,25 @@ from .forms import FormRegistroUsuario, TesteForm, AlunoForm, CustomLoginUsuario
 def is_admin(user):
     return user.is_staff
 
-# Tela para quem tem perfil de admin
-@user_passes_test(is_admin)
 def admin_dashboard(request):
-    testes = Teste.objects.all()
+    # Se o usuário for administrador, ele pode ver todos os testes
+    if request.user.is_staff:
+        testes = Teste.objects.all()
+    else:
+        # Usuários comuns veem apenas seus próprios testes
+        testes = Teste.objects.filter(aluno__user=request.user)
+
+    # Aplicando os filtros, se existirem
     filtro_tipo_teste = request.GET.get('filtro_tipo_teste')
     busca_nome_aluno = request.GET.get('busca_nome_aluno')
 
     if filtro_tipo_teste:
-        testes = testes.filter(tipo_teste = filtro_tipo_teste)
+        testes = testes.filter(tipo_teste=filtro_tipo_teste)
+
     if busca_nome_aluno:
-        testes = testes.filter(aluno__user__first__name__icontatins=busca_nome_aluno)
+        # Administradores podem buscar alunos por nome
+        if request.user.is_staff:
+            testes = testes.filter(aluno__user__first_name__icontains=busca_nome_aluno)
 
     return render(request, 'admin_dashboard.html', {'testes': testes})
 
@@ -54,7 +61,7 @@ def editar_teste(request, teste_id):
             return redirect('admin_dashboard')
     else:
         formulario = TesteForm(instance=teste)
-    return render(request, 'editar_teste.html', {'formulario', formulario})
+    return render(request, 'editar_teste.html', {'formulario': formulario})
 
 # Excluir teste
 @user_passes_test(is_admin)
@@ -80,7 +87,6 @@ def cadastrar_aluno(request):
 
             # Enviando para BD
             user = User.objects.create_user(
-                username = email,
                 email = email,
                 password = senha,
                 first_name = primeiro_nome,
@@ -106,18 +112,26 @@ def registro(request):
     if request.method == 'POST':
         formulario = FormRegistroUsuario(request.POST)
         if formulario.is_valid():
-            user            = formulario.save()
-            nome_completo   = formulario.cleaned_data.get('nome_completo')
+            # Cria e salva o usuário
+            user = formulario.save()
 
+            # Captura o nome completo
+            nome_completo = formulario.cleaned_data.get('nome_completo')
+
+            # Define o primeiro e último nome do usuário
             user.first_name = nome_completo.split(' ')[0]
-            user.last_name  = ' '.join(nome_completo.split(' ')[1:])
-            user.save()
+            user.last_name = ' '.join(nome_completo.split(' ')[1:]) if len(nome_completo.split(' ')) > 1 else ''
+            user.save()  # Salva as alterações no usuário
 
-            #Define como usuário comum
-            UserProfile.objects.create(user=user, is_admin=False)
+            # Cria o perfil de aluno associado ao usuário criado
+            Aluno.objects.create(user=user)  # Passa a instância correta de 'user'
 
+            # Faz o login automático do usuário após o registro
             login(request, user)
-            return redirect('login')
+
+            # Redireciona o usuário para a página de login (ou para outra página, como dashboard)
+            return redirect('admin_dashboard')  # Você pode mudar para a página desejada, como 'dashboard'
+
     else:
         formulario = FormRegistroUsuario()
 
@@ -128,9 +142,9 @@ def login_usuario(request):
     if request.method == 'POST':
         formulario = CustomLoginUsuario(request, data=request.POST)
         if formulario.is_valid():
-            username    = formulario.cleaned_data.get('username')
+            username    = formulario.cleaned_data.get('email')
             password    = formulario.cleaned_data.get('password')
-            user = authenticate(username=username, password=password)
+            user = authenticate(email=username, password=password)
 
             if user is not None:
                 login(request, user)
