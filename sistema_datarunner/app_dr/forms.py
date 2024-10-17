@@ -1,10 +1,9 @@
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django import forms
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 
 from .models import Aluno, Teste
-
 
 # Form para cadastro de usuário
 class FormRegistroUsuario(UserCreationForm):
@@ -54,3 +53,14 @@ class TesteForm(forms.ModelForm):
             if not cleaned_data.get('distancia'):
                 self.add_error('distancia', 'É necessário informar a distância para o teste de 12min')
         return cleaned_data
+
+#Form para login
+class CustomLoginUsuario(AuthenticationForm):
+    username = forms.CharField(
+        label="E-mail",
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'E-Mail'})
+    )
+    password = forms.CharField(
+        label="Senha",
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Senha'})
+    )

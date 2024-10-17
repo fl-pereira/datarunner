@@ -4,10 +4,17 @@
 
 {% block content %}
 
-    <form method="POST">
-        {% csrf_token %}
-        {{ formulario.as_p }}
-        <button type="submit">Cadastrar</button>
-    </form>
+    <div class="d-flex justify-content-center align-items-center" style="min-height: 100vh;">
+        <div class="col-12 col-md-6 p-4" style="background-color: white; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
+            <div class="text-center mb-4">
+                <img src="{#{% static 'path/to/your/logo.png' %}#}" alt="Logo" style="max-width: 100px;">
+            </div>
+            <form method="POST">
+                {% csrf_token %}
+                {{ formulario.as_p }}
+                <button type="submit" class="btn btn-primary w-100 mb-2">Cadastrar</button>
+            </form>
+        </div>
+    </div>
 
 {% endblock %}

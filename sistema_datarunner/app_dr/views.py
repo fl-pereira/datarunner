@@ -1,6 +1,6 @@
 from re import search
 
-from django.contrib.auth import login, authenticate
+from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import User
@@ -8,7 +8,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 
 from .models import UserProfile, Teste, Aluno
-from .forms import FormRegistroUsuario, TesteForm, AlunoForm
+from .forms import FormRegistroUsuario, TesteForm, AlunoForm, CustomLoginUsuario
 
 
 # Verifica se o usuário é admin
@@ -126,7 +126,7 @@ def registro(request):
 # Tela de login
 def login_usuario(request):
     if request.method == 'POST':
-        formulario = AuthenticationForm(request, data=request.POST)
+        formulario = CustomLoginUsuario(request, data=request.POST)
         if formulario.is_valid():
             username    = formulario.cleaned_data.get('username')
             password    = formulario.cleaned_data.get('password')
@@ -146,12 +146,12 @@ def login_usuario(request):
         else:
             messages.error(request, 'Formulário inválido. Verifique os dados informados.')
     else:
-        formulario = AuthenticationForm()
+        formulario = CustomLoginUsuario()
 
     return render(request, 'login.html', {'formulario': formulario})
 
 # Mensagem de logout
-def logout(request):
+def user_logout(request):
     logout(request)
     messages.info(request, 'Sessão encerrada com sucesso.')
     return redirect('login') #redirecionando para área de login
