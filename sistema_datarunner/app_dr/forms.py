@@ -1,40 +1,65 @@
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django import forms
-from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 
-from .models import Aluno, Teste
+from .models import Teste, Profile, User
 
-# Form para cadastro de usuário
+
 class FormRegistroUsuario(UserCreationForm):
-    email = forms.EmailField()
-    nome_completo = forms.CharField(max_length=100, label='Nome completo')
+    email = forms.EmailField(label="E-mail",
+                             widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'E-mail'}))
+    nome_completo = forms.CharField(label="Nome completo", max_length=100, widget=forms.TextInput(
+        attrs={'class': 'form-control', 'placeholder': 'Nome completo'}))
+    data_nascimento = forms.DateField(label="Data de nascimento", widget=forms.DateInput(
+        attrs={'class': 'form-control', 'placeholder': 'DD/MM/AAAA'}))
+    peso = forms.DecimalField(label="Peso", max_digits=5, decimal_places=2,
+                              widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Peso'}))
+    altura = forms.DecimalField(label="Altura", max_digits=5, decimal_places=2,
+                                widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Altura'}))
 
     class Meta:
         model = User
-        fields = ['nome_completo', 'email', 'password1', 'password2']
+        fields = ['email', 'nome_completo', 'data_nascimento', 'peso', 'altura', 'password1', 'password2']
+        labels = {
+            'nome_completo': 'Nome completo',
+            'email': 'E-mail',
+            'data_nascimento': 'Data de nascimento',
+            'peso': 'Peso',
+            'altura': 'Altura',
+            'password1': 'Senha',
+            'password2': 'Confirmação de senha',
+        }
+        help_texts = {
+            'password1': (
+                "Sua senha não pode ser muito semelhante às suas outras informações pessoais.\n"
+                "Sua senha deve conter pelo menos 8 caracteres.\n"
+                "Sua senha não pode ser uma senha comumente usada.\n"
+                "Sua senha não pode ser inteiramente numérica."
+            ),
+        }
 
-    def verifica_email(self):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['password1'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Senha'})
+        self.fields['password2'].widget.attrs.update(
+            {'class': 'form-control', 'placeholder': 'Confirmação de senha'})
+
+    def clean_email(self):
         email = self.cleaned_data.get('email')
         if User.objects.filter(email=email).exists():
-            raise ValidationError('Este e-mail já está sendo utilizado')
+            raise forms.ValidationError("Este e-mail já está registrado.")
         return email
 
-# Form para cadastro de aluno, quando esse já é um usuário
-class AlunoForm(forms.ModelForm):
-    nome_completo = forms.CharField(max_length=255, label='Nome completo')
-    email = forms.EmailField(label='E-mail')
-    senha = forms.CharField(widget=forms.PasswordInput, label='Senha')
-
-    class Meta:
-        model = Aluno
-        fields = ['data_nascimento', 'peso', 'altura']
-
-    def verifica_email(self):
-        email = self.cleaned_data.get('email')
-        if User.objects.filter(email=email).exists():
-            raise forms.ValidationError('Já existe um usuário com este e-mail')
-        return email
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.username = self.cleaned_data['email']  # Define o email como username
+        user.save()
+        Profile.objects.create(
+            user=user,
+            data_nascimento=self.cleaned_data['data_nascimento'],
+            peso=self.cleaned_data['peso'],
+            altura=self.cleaned_data['altura'])
+        return user
 
 # Form para cadastro de teste
 class TesteForm(forms.ModelForm):
@@ -56,6 +81,7 @@ class TesteForm(forms.ModelForm):
 
 #Form para login
 class CustomLoginUsuario(AuthenticationForm):
+
     username = forms.EmailField(
         label="E-mail",
         widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'E-Mail', 'autofocus': True})
@@ -64,3 +90,7 @@ class CustomLoginUsuario(AuthenticationForm):
         label="Senha",
         widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Senha'})
     )
+
+    def confirm_login_allowed(self, user):
+        if not user.is_active:
+            raise forms.ValidationError("Conta desativada.", code='inactive')

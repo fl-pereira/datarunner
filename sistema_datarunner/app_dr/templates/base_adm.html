@@ -10,6 +10,12 @@
     <link rel="stylesheet" type="text/css" href="{% static 'app_dr/styles.css' %}">
 </head>
 <body>
+    {% if user.is_authenticated %}
+    <form method="post" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Logout</button>
+    </form>
+    {% endif %}
     <div class="container">
 
         <h2>Inserir cabeçalho ADMIN</h2>

@@ -1,18 +1,19 @@
-from re import search
-
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import user_passes_test
-from django.contrib.auth.models import User
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from .backends import EmailBackend
 
-from .models import Teste, Aluno
-from .forms import FormRegistroUsuario, TesteForm, AlunoForm, CustomLoginUsuario
-
+from .models import Teste
+from .forms import FormRegistroUsuario, TesteForm, CustomLoginUsuario
 
 # Verifica se o usuário é admin
 def is_admin(user):
     return user.is_staff
+
+# view da homepage
+def home(request):
+    return render(request, 'home.html')
 
 def admin_dashboard(request):
     # Se o usuário for administrador, ele pode ver todos os testes
@@ -20,7 +21,7 @@ def admin_dashboard(request):
         testes = Teste.objects.all()
     else:
         # Usuários comuns veem apenas seus próprios testes
-        testes = Teste.objects.filter(aluno__user=request.user)
+        testes = Teste.objects.filter(aluno=request.user)
 
     # Aplicando os filtros, se existirem
     filtro_tipo_teste = request.GET.get('filtro_tipo_teste')
@@ -71,42 +72,6 @@ def excluir_teste(request, teste_id):
     messages.success(request, 'Teste excluído com sucesso.')
     return redirect('admin_dashboard')
 
-# Cadastrar aluno
-@user_passes_test(is_admin)
-def cadastrar_aluno(request):
-    if request.method == 'POST':
-        formulario = AlunoForm(request.POST)
-        if formulario.is_valid():
-            # Criando usuário
-            nome_completo = formulario.cleaned_data['nome_completo']
-            email = formulario.cleaned_data['email']
-            senha = formulario.cleaned_data['senha']
-
-            primeiro_nome = nome_completo.split(' ')[0]
-            ultimo_nome = ' '.join(nome_completo.split(' ')[1:])
-
-            # Enviando para BD
-            user = User.objects.create_user(
-                email = email,
-                password = senha,
-                first_name = primeiro_nome,
-                last_name = ultimo_nome
-            )
-
-            aluno = formulario.save(commit=False)
-            aluno.user = user # Associando o aluno ao usuário criado
-            aluno.save()
-
-            messages.success(request, 'Aluno cadastrado com sucesso!')
-            return redirect('admin_dashboard')
-    else:
-        formulario = AlunoForm()
-    return render(request, 'cadastrar_aluno.html', {'formulario': formulario})
-
-# view da homepage
-def home(request):
-    return render(request, 'home.html')
-
 # view para registro de usuário
 def registro(request):
     if request.method == 'POST':
@@ -114,27 +79,17 @@ def registro(request):
         if formulario.is_valid():
             # Cria e salva o usuário
             user = formulario.save()
-
-            # Captura o nome completo
-            nome_completo = formulario.cleaned_data.get('nome_completo')
-
-            # Define o primeiro e último nome do usuário
-            user.first_name = nome_completo.split(' ')[0]
-            user.last_name = ' '.join(nome_completo.split(' ')[1:]) if len(nome_completo.split(' ')) > 1 else ''
-            user.save()  # Salva as alterações no usuário
-
-            # Cria o perfil de aluno associado ao usuário criado
-            Aluno.objects.create(user=user)  # Passa a instância correta de 'user'
-
-            # Faz o login automático do usuário após o registro
-            login(request, user)
-
-            # Redireciona o usuário para a página de login (ou para outra página, como dashboard)
-            return redirect('admin_dashboard')  # Você pode mudar para a página desejada, como 'dashboard'
-
+            # Autentica o usuário
+            email = formulario.cleaned_data.get('email')
+            password = formulario.cleaned_data.get('password1')
+            user = authenticate(request, email=email, password=password, backend='app_dr.backends.EmailBackend')
+            if user is not None:
+                login(request, user, backend='app_dr.backends.EmailBackend')
+                messages.success(request, f'Bem-vindo, {user.first_name}')
+                # Redireciona o usuário para a página de dashboard
+                return redirect('admin_dashboard')
     else:
         formulario = FormRegistroUsuario()
-
     return render(request, 'registro.html', {'formulario': formulario})
 
 # Tela de login
@@ -142,26 +97,19 @@ def login_usuario(request):
     if request.method == 'POST':
         formulario = CustomLoginUsuario(request, data=request.POST)
         if formulario.is_valid():
-            username    = formulario.cleaned_data.get('email')
-            password    = formulario.cleaned_data.get('password')
-            user = authenticate(email=username, password=password)
-
+            email = formulario.cleaned_data.get('username')
+            password = formulario.cleaned_data.get('password')
+            user = authenticate(request, email=email, password=password)
             if user is not None:
-                login(request, user)
+                login(request, user, backend='app_dr.backends.EmailBackend')
                 messages.success(request, f'Bem-vindo, {user.first_name}')
-
-                # Checa se o usuário é admin
-                if user.is_staff:
-                    return redirect('admin_dashboard')
-                else:
-                    return redirect('home')
+                return redirect('admin_dashboard')
             else:
                 messages.error(request, 'Usuário ou senha inválidos.')
         else:
             messages.error(request, 'Formulário inválido. Verifique os dados informados.')
     else:
         formulario = CustomLoginUsuario()
-
     return render(request, 'login.html', {'formulario': formulario})
 
 # Mensagem de logout

@@ -4,8 +4,9 @@
 
 {% block content %}
 
-<a href="{% url 'cadastrar_teste' %}">Cadastrar Novo Teste</a>
-<a href="{% url 'cadastrar_aluno' %}">Cadastrar Novo Aluno</a>
+{% if user.is_staff or user.is_superuser %}
+    <a href="{% url 'cadastrar_teste' %}">Cadastrar Novo Teste</a>
+{% endif %}
 
 <h2>Testes Cadastrados</h2>
 

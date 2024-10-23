@@ -9,10 +9,8 @@ https://docs.djangoproject.com/en/5.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
-
+import os
 from pathlib import Path
-
-from django.conf.global_settings import LOGIN_URL, LOGOUT_REDIRECT_URL, LOGIN_REDIRECT_URL
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -102,11 +100,24 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+AUTH_USER_MODEL = 'app_dr.User'
+AUTHENTICATION_BACKENDS = ['app_dr.backends.EmailBackend', 'django.contrib.auth.backends.ModelBackend']
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+from django.utils.translation import gettext_lazy as _
+
+LANGUAGE_CODE = 'pt-BR'
+
+LANGUAGES = [
+    ('en', _('English')),
+    ('pt-BR', _('Portuguese (Brazil)')),
+]
+
+LOCALE_PATHS = [
+    os.path.join(BASE_DIR, 'locale'),
+]
 
 TIME_ZONE = 'UTC'
 
