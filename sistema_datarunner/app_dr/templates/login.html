@@ -1,32 +1,25 @@
 {% extends "base.html" %}
 
-{% block title %} DATARUNNER - Login {% endblock %}
+{% block title %}Login{% endblock %}
 
 {% block content %}
-    <div class="d-flex justify-content-center align-items-center" style="min-height: 100vh;">
-        <div class="col-12 col-md-6 p-4" style="background-color: white; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
-            <div class="text-center mb-4">
-                <img src="{#{% static 'path/to/your/logo.png' %}#}" alt="Logo" style="max-width: 100px;">
+<div class="d-flex justify-content-center align-items-center" style="min-height: 100vh;">
+    <div class="col-12 col-md-6 p-4" style="background-color: white; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
+        <form method="POST">
+            {% csrf_token %}
+            <div class="form-group">
+                {{ formulario.non_field_errors }}
+                {% for field in formulario %}
+                    <div class="mb-3">
+                        {{ field.label_tag }}
+                        {{ field }}
+                        {{ field.errors }}
+                    </div>
+                {% endfor %}
             </div>
-            <form method="POST">
-                {% csrf_token %}
-                <div class="form-group">
-                    {{ formulario.non_field_errors }}
-                    {% for field in formulario %}
-                        <div class="mb-3">
-                            {{ field.label_tag }}
-                            {{ field }}
-                            {{ field.errors }}
-                        </div>
-                    {% endfor %}
-                </div>
-                <button type="submit" class="btn btn-primary w-100 mb-2">Entrar</button>
-                <button type="button" class="btn btn-secondary w-100">Esqueci minha senha</button>
-            </form>
-            <a href="{% url 'registro' %}" class="btn btn-link">Cadastrar-se</a>
-        </div>
+            <button type="submit" class="btn btn-primary w-100 mb-2">Entrar</button>
+            <a href="{% url 'registro' %}" class="btn btn-link w-100">Registrar-se</a>
+        </form>
     </div>
+</div>
 {% endblock %}
-
-
-

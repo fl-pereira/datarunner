@@ -51,11 +51,10 @@ class Teste(models.Model):
         ('3k', '3 km'),
         ('12min', '12 minutos'),
     ]
-
     aluno = models.ForeignKey(User, on_delete=models.CASCADE)  # Relaciona teste x aluno
     data_teste = models.DateField()
     tipo_teste = models.CharField(max_length=5, choices=TIPOS_TESTE)
-    tempo = models.TimeField(null=True, blank=True)  # Para testes de 3km
+    tempo = models.CharField(max_length=5, null=True, blank=True)  # Usando CharField para tempo como string
     distancia = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)  # Para testes de 12min
     bpm = models.IntegerField()  # Batimentos cardíacos
     pace = models.CharField(max_length=10, blank=True)
@@ -63,12 +62,15 @@ class Teste(models.Model):
     def calcular_pace(self):
         if self.tipo_teste == '3k' and self.tempo:
             # Cálculo de pace para teste de 3k
-            tempo_minutos = (self.tempo.hour * 60) + self.tempo.minute + (self.tempo.second / 60)
-            pace = tempo_minutos / 3
-            return f'{pace:.2f} min/km'
+            minutos, segundos = map(int, self.tempo.split(':'))
+            total_minutos = minutos + (segundos / 60)
+            pace = total_minutos / 3
+            return f'{int(pace // 1)}:{int((pace % 1) * 60):02d} min/km'
         elif self.tipo_teste == '12min' and self.distancia:
-            pace = 12 / (self.distancia / 1000)
-            return f'{pace:.2f} min/km'
+            # Cálculo de pace para teste de 12min
+            tempo_minutos = 12
+            pace = tempo_minutos / self.distancia
+            return f'{int(pace // 1)}:{int((pace % 1) * 60):02d} min/km'
         return None
 
     def save(self, *args, **kwargs):

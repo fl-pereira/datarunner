@@ -28,11 +28,11 @@
             {% for teste in testes %}
                 <tr>
                     <td>{{ teste.id }}</td>
-                    <td>{{ teste.usuario.nome_completo }}</td>
+                    <td>{{ teste.aluno.first_name }} {{ teste.aluno.last_name }}</td>
                     <td>{{ teste.data_teste }}</td>
                     <td>{{ teste.tipo_teste }}</td>
                     <td>
-                        {% if teste.tipo_teste == "3km" %}
+                        {% if teste.tipo_teste == "3k" %}
                             {{ teste.tempo }}
                         {% else %}
                             {{ teste.distancia }}

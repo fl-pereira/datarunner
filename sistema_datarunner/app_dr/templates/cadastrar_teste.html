@@ -3,13 +3,45 @@
 {% block title %} DATARUNNER - Cadastrar Teste {% endblock %}
 
 {% block content %}
+    <div class="d-flex justify-content-center align-items-center" style="min-height: 100vh;">
+        <div class="col-12 col-md-6 p-4" style="background-color: white; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
+            <form method="POST" id="testeForm">
+                {% csrf_token %}
+                <div class="form-group">
+                    {{ formulario.non_field_errors }}
+                    {% for field in formulario %}
+                        <div class="mb-3" id="div_{{ field.name }}">
+                            {{ field.label_tag }}
+                            {{ field }}
+                            {{ field.errors }}
+                        </div>
+                    {% endfor %}
+                </div>
+                <button type="submit" class="btn btn-primary w-100 mb-2">Cadastrar Teste</button>
+            </form>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const tipo_teste = document.querySelector('#tipo_teste');
+            const tempo = document.querySelector('#div_tempo');
+            const distancia = document.querySelector('#div_distancia');
 
-  <h1>Cadastrar Teste</h1>
+            function toggleFields() {
+                if (tipo_teste.value === '3k') {
+                    tempo.style.display = 'block';
+                    distancia.style.display = 'none';
+                } else if (tipo_teste.value === '12min') {
+                    tempo.style.display = 'none';
+                    distancia.style.display = 'block';
+                } else {
+                    tempo.style.display = 'none';
+                    distancia.style.display = 'none';
+                }
+            }
 
-  <form method="POST">
-      {% csrf_token %}
-      {{ formulario.as_p }}
-     <button type="submit">Salvar</button>
-  </form>
-
-  {% endblock %}
+            tipo_teste.addEventListener('change', toggleFields);
+            toggleFields();  // Call on page load to set initial state
+        });
+    </script>
+{% endblock %}

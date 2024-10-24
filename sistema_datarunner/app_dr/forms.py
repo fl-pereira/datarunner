@@ -1,9 +1,7 @@
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django import forms
-from django.core.exceptions import ValidationError
 
 from .models import Teste, Profile, User
-
 
 class FormRegistroUsuario(UserCreationForm):
     email = forms.EmailField(label="E-mail",
@@ -60,23 +58,31 @@ class FormRegistroUsuario(UserCreationForm):
             peso=self.cleaned_data['peso'],
             altura=self.cleaned_data['altura'])
         return user
-
 # Form para cadastro de teste
 class TesteForm(forms.ModelForm):
     class Meta:
         model = Teste
         fields = ['aluno', 'data_teste', 'tipo_teste', 'tempo', 'distancia', 'bpm']
+        widgets = {
+            'tipo_teste': forms.Select(attrs={'class': 'form-control', 'id': 'tipo_teste'}),
+            'tempo': forms.TextInput(attrs={'class': 'form-control', 'id': 'tempo', 'placeholder': 'MM:SS'}),
+            'distancia': forms.NumberInput(attrs={'class': 'form-control', 'id': 'distancia', 'placeholder': 'km'}),
+        }
 
     def clean(self):
         cleaned_data = super().clean()
         tipo_teste = cleaned_data.get('tipo_teste')
-
-        if tipo_teste == '3km':
-            if not cleaned_data.get('tempo'):
-                self.add_error('tempo', 'É necessário informar o tempo para o teste de 3km')
-        elif tipo_teste == '12min':
-            if not cleaned_data.get('distancia'):
-                self.add_error('distancia', 'É necessário informar a distância para o teste de 12min')
+        tempo = cleaned_data.get('tempo')
+        if tipo_teste == '3km' and tempo:
+            try:
+                minutos, segundos = map(int, tempo.split(':'))
+                if minutos < 0 or segundos < 0 or segundos >= 60:
+                    raise ValueError
+                cleaned_data['tempo'] = f'{minutos:02d}:{segundos:02d}'
+            except ValueError:
+                self.add_error('tempo', 'Formato de tempo inválido. Use MM:SS.')
+        elif tipo_teste == '12min' and not cleaned_data.get('distancia'):
+            self.add_error('distancia', 'É necessário informar a distância para o teste de 12min')
         return cleaned_data
 
 #Form para login
